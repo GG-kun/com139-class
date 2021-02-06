@@ -37,26 +37,33 @@ def addBlinker(i, j, grid):
     grid[i:i+3, j:j+3] = blinker
 
 def live_rule(cell, neighborsCount):
+    # Any live cell with fewer than two live neighbours dies, as if by underpopulation
+    # Any live cell with more than three live neighbours dies, as if by overpopulation
     if neighborsCount < 2 or neighborsCount > 3:
         return OFF
+    # Any live cell with two or three live neighbours lives on to the next generation
     return cell
 
 def dead_rule(cell, neighborsCount):
+    # Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction
     if neighborsCount == 3:
         return ON
+    # All other dead cells stay dead
     return cell
 
 def update(frameNum, img, grid, N):
     # copy grid since we require 8 neighbors for calculation
     # and we go line by line 
     newGrid = grid.copy()
-    # TODO: Implement the rules of Conway's Game of Life
+
+    # Grid iteration
     yCells = len(grid)
     for y in range(yCells):
         xCells = len(grid[y])
         for x in range(xCells):
+            # Current cell
             cell = grid[y][x]
-            # Get neighbors list
+            # Get current cell neighbors list
             neighbors = []
             for i in range(-1,2):
                 for j in range(-1,2):
@@ -66,14 +73,15 @@ def update(frameNum, img, grid, N):
                     neighborX = x+j
                     if neighborY >= 0 and neighborY < yCells and neighborX >= 0 and neighborX < xCells:
                         neighbors.append(grid[neighborY][neighborX])
-            # Get neighbors count
+            # Get current cell neighbors count
             neighborsCount = neighbors.count(ON)
-            # Live rule
+            # Live rule on current cell
             if cell == ON:
                 cell = live_rule(cell, neighborsCount)
-            # Dead rule    
+            # Dead rule on current cell  
             else:
                 cell = dead_rule(cell, neighborsCount)
+            # Update current cell in new grid
             newGrid[y][x] = cell
 
     # update data
@@ -90,13 +98,16 @@ def main():
     
     # set grid size
     N = 100
+    # Get arguments
     if len(sys.argv) > 1:
+        # Get size from arguments
         N = sys.argv[1]
         if N.isnumeric():
             N = int(N)
         else:
-            print("usage: conway.py [size] [generation] [file]")
+            print("usage: conway.py [size] [generations] [file]")
             return
+        # Get initial configuration file name from arguments
         if len(sys.argv) > 2:
             configurationFile = sys.argv[2]    
         
