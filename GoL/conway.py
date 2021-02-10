@@ -98,6 +98,8 @@ def main():
     
     # set grid size
     N = 100
+    # set generations number 
+    generations = 200
     # Get arguments
     if len(sys.argv) > 1:
         # Get size from arguments
@@ -109,15 +111,24 @@ def main():
             return
         # Get initial configuration file name from arguments
         if len(sys.argv) > 2:
-            configurationFile = sys.argv[2]    
-        
+            # Get generations from arguments
+            generations = sys.argv[2]
+            if generations.isnumeric():
+                generations = int(generations)
+            else:
+                print("usage: conway.py [size] [generations] [file]")
+                return
+            if len(sys.argv) > 3:
+                configurationFile = sys.argv[3]
+                print(configurationFile)
+
     # set animation update interval
-    updateInterval = 50
+    updateInterval = 1000   
 
     # declare grid
     grid = np.array([])
     # populate grid with random on/off - more off than on
-    # grid = randomGrid(N)
+    grid = randomGrid(N)
     # Uncomment lines to see the "glider" demo
     # grid = np.zeros(N*N).reshape(N, N)
     # addGlider(1, 1, grid)
@@ -132,7 +143,7 @@ def main():
     fig, ax = plt.subplots()
     img = ax.imshow(grid, interpolation='nearest')
     ani = animation.FuncAnimation(fig, update, fargs=(img, grid, N, ),
-                                  frames = 10,
+                                  frames = generations, repeat = False, # Stop generation after number of generations happen
                                   interval=updateInterval,
                                   save_count=50)
 
