@@ -131,6 +131,7 @@ def update(frameNum, img, grid, N):
     for entity in entities:
         f.write(" {0}({1}%)".format(entity,entity/total*100))
     f.write("\n")
+    f.close()
 
     # update data
     img.set_data(newGrid)
@@ -189,6 +190,7 @@ def main():
 
     f = open("entity_count.txt","w")
     f.write("Generation Block Beehive Loaf Boat Tub Blinker Toad Beacon Glider Light-weight spaceship Others\n")
+    f.close()
 
     # set up animation
     fig, ax = plt.subplots()
