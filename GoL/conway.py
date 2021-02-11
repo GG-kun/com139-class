@@ -12,6 +12,41 @@ ON = 255
 OFF = 0
 vals = [ON, OFF]
 
+def fileGrid(configurationFileName):
+    """returns a grid of NxM specified by the file with 2D coordinates"""    
+    configurationFile = open(configurationFileName, "r")
+    lines = configurationFile.readlines()
+    if len(lines) <= 0:
+        print("file is empty")
+        return np.array([])
+    
+    # First file line is a 2D tuple for the grid dimensions
+    dimensions = lines[0].split()
+    if not dimensions[0].isnumeric() or not dimensions[1].isnumeric():
+        print("at least one file dimension is not numeric")
+        return np.array([])
+    N = int(dimensions[0])
+    M = int(dimensions[1])
+    grid = np.zeros(N*M).reshape(N, M)
+
+    # Grid coordinate (0,0) is at top left corner and is the first cell
+    for line in lines[1:]:
+        coordinates = line.split()
+        if not coordinates[0].isnumeric() or not coordinates[1].isnumeric():
+            print("at least one file coordinate is not numeric")
+            return np.array([])
+
+        # A file coordinate is in the type "y x"
+        x = int(coordinates[1])
+        y = int(coordinates[0])
+
+        if y >= N or x >= M:
+            print("at least a coordinate is outside of the grid")
+            return np.array([])
+        grid[y][x] = ON
+
+    return grid
+
 def randomGrid(N):
     """returns a grid of NxN random values"""
     return np.random.choice(vals, N*N, p=[0.2, 0.8]).reshape(N, N)
@@ -98,36 +133,18 @@ def main():
     
     # set grid size
     N = 100
+
     # set generations number 
     generations = 200
-    # Get arguments
-    if len(sys.argv) > 1:
-        # Get size from arguments
-        N = sys.argv[1]
-        if N.isnumeric():
-            N = int(N)
-        else:
-            print("usage: conway.py [size] [generations] [file]")
-            return
-        # Get initial configuration file name from arguments
-        if len(sys.argv) > 2:
-            # Get generations from arguments
-            generations = sys.argv[2]
-            if generations.isnumeric():
-                generations = int(generations)
-            else:
-                print("usage: conway.py [size] [generations] [file]")
-                return
-            if len(sys.argv) > 3:
-                configurationFile = sys.argv[3]
-                print(configurationFile)
 
     # set animation update interval
-    updateInterval = 1000   
+    updateInterval = 1000
 
     # declare grid
     grid = np.array([])
+
     # populate grid with random on/off - more off than on
+    # default grid when configFile is not given
     grid = randomGrid(N)
     # Uncomment lines to see the "glider" demo
     # grid = np.zeros(N*N).reshape(N, N)
@@ -138,6 +155,24 @@ def main():
     # Uncomment lines to see the "blinker" demo
     # grid = np.zeros(N*N).reshape(N, N)
     # addBlinker(1, 1, grid)
+
+    # Get arguments
+    if len(sys.argv) > 1:
+        # Get initial configuration file name from arguments
+        grid = fileGrid(sys.argv[1])
+        if len(grid) <= 0:
+            return  
+        if len(sys.argv) > 2:
+            # Get generations from arguments
+            generations = sys.argv[2]
+            if generations.isnumeric():
+                generations = int(generations)
+                if generations <= 0:
+                    print("generations must be a higher than 0")
+                    return
+            else:
+                print("usage: conway.py [file] [generations]")
+                return
 
     # set up animation
     fig, ax = plt.subplots()
