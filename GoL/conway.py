@@ -13,6 +13,12 @@ ON = 255
 OFF = 0
 vals = [ON, OFF]
 
+# Entities templates
+block = np.array([[ON, ON], 
+                    [ON, ON]])
+
+templates = [block]
+
 def fileGrid(configurationFileName):
     """returns a grid of NxM specified by the file with 2D coordinates"""    
     configurationFile = open(configurationFileName, "r")
@@ -61,8 +67,6 @@ def addGlider(i, j, grid):
 
 def addBlock(i, j, grid):
     """adds a block with top left cell at (i, j)"""
-    block = np.array([[255, 255], 
-                        [255, 255]])
     grid[i:i+2, j:j+2] = block
 
 def addBlinker(i, j, grid):
@@ -87,15 +91,23 @@ def dead_rule(cell, neighborsCount):
     # All other dead cells stay dead
     return cell
 
+def compareEntities(A,B):
+    comparison = A == B
+    return comparison.all()
+
 def update(frameNum, img, grid, N):
     # copy grid since we require 8 neighbors for calculation
     # and we go line by line 
     newGrid = grid.copy()
 
+    # Grid of visited cells for entity count
+    visitedGrid = np.zeros(N*N).reshape(N,N)
+
+    # Entity count
     entities = np.array([0,0,0,0,0, # Block, Beehive, Loaf, Boat, Tub
                         0,0,0, # Blinker, Toad, Beacon
                         0,0, # Glider, Light-weight spaceship
-                        1]) # Others
+                        0]) # Others
 
     # Grid iteration
     yCells = len(grid)
@@ -125,6 +137,27 @@ def update(frameNum, img, grid, N):
             # Update current cell in new grid
             newGrid[y][x] = cell
 
+            # Entity count
+            if visitedGrid[y][x] == 0:
+                for i, template in enumerate(templates):
+                    j = len(templates) - 1 - i
+                    yOffset = len(template)
+                    xOffset = len(template[0])
+                    window = grid[y:y+yOffset,x:x+xOffset]
+                    if compareEntities(block, window):
+                        entities[j] += 1
+                        visitedGrid[y:y+yOffset,x:x+xOffset] = np.ones(yOffset*xOffset).reshape(yOffset,xOffset)
+
+    # Others count
+    for y in range(yCells):
+        for x in range(xCells):
+            if visitedGrid[y][x] == 0:
+                fiveWindow = visitedGrid[y:y+5,x:x+5][0]
+                if sum(fiveWindow) > 0:
+                    entities[len(entities)-1] += 1
+                visitedGrid[y:y+5,x:x+5] = np.ones(5*5).reshape(5,5)
+
+    # Output file
     f = open("entity_count.txt","a")
     f.write("{0}:".format(frameNum))
     total = sum(entities)
@@ -188,9 +221,13 @@ def main():
                 print("usage: conway.py [file] [generations]")
                 return
 
+    # Output file
     f = open("entity_count.txt","w")
     f.write("Generation Block Beehive Loaf Boat Tub Blinker Toad Beacon Glider Light-weight spaceship Others\n")
     f.close()
+
+    # Templates reverse so templates start from bigger
+    templates.reverse()
 
     # set up animation
     fig, ax = plt.subplots()
