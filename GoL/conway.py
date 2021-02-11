@@ -1,6 +1,7 @@
 """
 conway.py 
 A simple Python/matplotlib implementation of Conway's Game of Life.
+usage: conway.py [file] [generations]
 """
 
 import sys, argparse
@@ -91,6 +92,11 @@ def update(frameNum, img, grid, N):
     # and we go line by line 
     newGrid = grid.copy()
 
+    entities = np.array([0,0,0,0,0, # Block, Beehive, Loaf, Boat, Tub
+                        0,0,0, # Blinker, Toad, Beacon
+                        0,0, # Glider, Light-weight spaceship
+                        1]) # Others
+
     # Grid iteration
     yCells = len(grid)
     for y in range(yCells):
@@ -118,6 +124,13 @@ def update(frameNum, img, grid, N):
                 cell = dead_rule(cell, neighborsCount)
             # Update current cell in new grid
             newGrid[y][x] = cell
+
+    f = open("entity_count.txt","a")
+    f.write("{0}:".format(frameNum))
+    total = sum(entities)
+    for entity in entities:
+        f.write(" {0}({1}%)".format(entity,entity/total*100))
+    f.write("\n")
 
     # update data
     img.set_data(newGrid)
@@ -173,6 +186,9 @@ def main():
             else:
                 print("usage: conway.py [file] [generations]")
                 return
+
+    f = open("entity_count.txt","w")
+    f.write("Generation Block Beehive Loaf Boat Tub Blinker Toad Beacon Glider Light-weight spaceship Others\n")
 
     # set up animation
     fig, ax = plt.subplots()
