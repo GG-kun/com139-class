@@ -14,8 +14,10 @@ OFF = 0
 vals = [ON, OFF]
 
 # Entities templates
-block = np.array([[ON, ON], 
-                    [ON, ON]])
+block = np.array([
+                    [ON, ON], 
+                    [ON, ON],
+])
 
 beehive = np.array([
                     [OFF,ON,ON,OFF],
@@ -23,7 +25,26 @@ beehive = np.array([
                     [OFF,ON,ON,OFF],
 ])
 
-templates = [block, beehive]
+loaf = np.array([
+                    [OFF,ON,ON,OFF],
+                    [ON,OFF,OFF,ON],
+                    [OFF,ON,OFF,ON],
+                    [OFF,OFF,ON,OFF],
+])
+
+boat = np.array([
+                    [ON,ON,OFF],
+                    [ON,OFF,ON],
+                    [OFF,ON,OFF],
+])
+
+tub = np.array([
+                    [OFF,ON,OFF],
+                    [ON,OFF,ON],
+                    [OFF,ON,OFF],
+])
+
+templates = [block, beehive, loaf, boat, tub]
 
 def fileGrid(configurationFileName):
     """returns a grid of NxM specified by the file with 2D coordinates"""    
