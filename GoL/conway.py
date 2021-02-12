@@ -59,10 +59,22 @@ toad = np.array([
                     [OFF, ON, OFF, OFF],
 ])
 
+toad_v2 = np.array([
+                    [OFF, ON, ON, ON],
+                    [ON, ON, ON, OFF],
+])
+
 beacon = np.array([
                     [ON, ON, OFF, OFF],
                     [ON, ON, OFF, OFF],
                     [OFF, OFF, ON, ON],
+                    [OFF, OFF, ON, ON],
+])
+
+beacon_v2 = np.array([
+                    [ON, ON, OFF, OFF],
+                    [ON, OFF, OFF, OFF],
+                    [OFF, OFF, OFF, ON],
                     [OFF, OFF, ON, ON],
 ])
 
@@ -73,11 +85,24 @@ glider = np.array([
                     [OFF, ON, ON],
 ])
 
+glider_v2 = np.array([
+                    [ON, OFF, ON], 
+                    [OFF, ON, ON], 
+                    [OFF, ON, OFF],
+])
+
 lwspaceship = np.array([
                     [ON, OFF, OFF, ON, OFF],
                     [OFF, OFF, OFF, OFF, ON],
                     [ON, OFF, OFF, OFF, ON],
                     [OFF, ON, ON, ON, ON],
+])
+
+lwspaceship_v2 = np.array([
+                    [OFF, OFF, ON, ON, OFF],
+                    [ON, ON, OFF, ON, ON],
+                    [ON, ON, ON, ON, OFF],
+                    [OFF, ON, ON, OFF, OFF],
 ])
 
 templates = [
@@ -244,6 +269,31 @@ def update(frameNum, img, grid, N):
     img.set_data(newGrid)
     grid[:] = newGrid[:]
     return img,
+
+def rotateRight(A):
+    return np.flip(A.copy().transpose(),1)
+
+def mirror(A):
+    return np.flip(A.copy(),1)
+
+def subentities(entities):
+    result = []
+    for entity in entities:
+        subentities = [entity]
+        
+        subentity = entity.copy()
+        for i in range(3):
+            subentity = rotateRight(subentity)
+            subentities.append(subentity)
+    
+        subentity = mirror(entity.copy())
+        subentities.append(subentity)
+        for i in range(3):
+            subentity = rotateRight(subentity)
+            subentities.append(subentity)
+        
+        result += np.unique(np.array(subentities), axis=0).tolist()
+    return np.unique(result, axis = 0)
 
 # main() function
 def main():
