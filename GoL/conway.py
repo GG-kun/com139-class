@@ -14,6 +14,7 @@ OFF = 0
 vals = [ON, OFF]
 
 # Entities templates
+# Still lifes
 block = np.array([
                     [ON, ON], 
                     [ON, ON],
@@ -44,7 +45,31 @@ tub = np.array([
                     [OFF,ON,OFF],
 ])
 
-templates = [block, beehive, loaf, boat, tub]
+# Oscillators
+blinker = np.array([
+                    [ON], 
+                    [ON], 
+                    [ON],
+])
+
+toad = np.array([
+                    [OFF,OFF,ON,OFF],
+                    [ON,OFF,OFF,ON],
+                    [ON,OFF,OFF,ON],
+                    [OFF,ON,OFF,OFF],
+])
+
+beacon = np.array([
+                    [ON,ON,OFF,OFF],
+                    [ON,ON,OFF,OFF],
+                    [OFF,OFF,ON,ON],
+                    [OFF,OFF,ON,ON],
+])
+
+templates = [
+    block, beehive, loaf, boat, tub, # Still lifes
+    blinker, toad, beacon, # Oscillators
+]
 
 def fileGrid(configurationFileName):
     """returns a grid of NxM specified by the file with 2D coordinates"""    
@@ -98,9 +123,6 @@ def addBlock(i, j, grid):
 
 def addBlinker(i, j, grid):
     """adds a blinker with top left cell at (i, j)"""
-    blinker = np.array([[0,    255, 0], 
-                        [0,  255, 0], 
-                        [0,  255, 0]])
     grid[i:i+3, j:j+3] = blinker
 
 def live_rule(cell, neighborsCount):
@@ -176,15 +198,23 @@ def update(frameNum, img, grid, N):
                     if compareEntities(template, window):
                         entities[j] += 1
                         visitedGrid[y:y+yOffset,x:x+xOffset] = np.ones(yOffset*xOffset).reshape(yOffset,xOffset)
+                        break
 
     # Others count
+    offset = 5
     for y in range(yCells):
         for x in range(xCells):
             if visitedGrid[y][x] == 0:
-                fiveWindow = visitedGrid[y:y+5,x:x+5][0]
-                if sum(fiveWindow) > 0:
+                # Entity window
+                window = grid[y:y+offset,x:x+offset].flatten()
+                aliveCells = sum(window)/ON
+                # Visited Window
+                window = visitedGrid[y:y+offset,x:x+offset].flatten()
+                countedCells = sum(window)
+                # Other Entity
+                if aliveCells > countedCells:
                     entities[len(entities)-1] += 1
-                visitedGrid[y:y+5,x:x+5] = np.ones(5*5).reshape(5,5)
+                visitedGrid[y:y+offset,x:x+offset] = np.ones(offset*offset).reshape(offset,offset)
 
     # Output file
     f = open("entity_count.txt","a")
@@ -236,7 +266,8 @@ def main():
     if len(sys.argv) > 1:
         # Get initial configuration file name from arguments
         grid = fileGrid(sys.argv[1])
-        if len(grid) <= 0:
+        N = len(grid)
+        if N <= 0:
             return  
         if len(sys.argv) > 2:
             # Get generations from arguments
