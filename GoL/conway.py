@@ -21,28 +21,28 @@ block = np.array([
 ])
 
 beehive = np.array([
-                    [OFF,ON,ON,OFF],
-                    [ON,OFF,OFF,ON],
-                    [OFF,ON,ON,OFF],
+                    [OFF, ON, ON, OFF],
+                    [ON, OFF, OFF, ON],
+                    [OFF, ON, ON, OFF],
 ])
 
 loaf = np.array([
-                    [OFF,ON,ON,OFF],
-                    [ON,OFF,OFF,ON],
-                    [OFF,ON,OFF,ON],
-                    [OFF,OFF,ON,OFF],
+                    [OFF, ON, ON, OFF],
+                    [ON, OFF, OFF, ON],
+                    [OFF, ON, OFF, ON],
+                    [OFF, OFF, ON, OFF],
 ])
 
 boat = np.array([
-                    [ON,ON,OFF],
-                    [ON,OFF,ON],
-                    [OFF,ON,OFF],
+                    [ON, ON, OFF],
+                    [ON, OFF, ON],
+                    [OFF, ON, OFF],
 ])
 
 tub = np.array([
-                    [OFF,ON,OFF],
-                    [ON,OFF,ON],
-                    [OFF,ON,OFF],
+                    [OFF, ON, OFF],
+                    [ON, OFF, ON],
+                    [OFF, ON, OFF],
 ])
 
 # Oscillators
@@ -53,22 +53,37 @@ blinker = np.array([
 ])
 
 toad = np.array([
-                    [OFF,OFF,ON,OFF],
-                    [ON,OFF,OFF,ON],
-                    [ON,OFF,OFF,ON],
-                    [OFF,ON,OFF,OFF],
+                    [OFF, OFF, ON, OFF],
+                    [ON, OFF, OFF, ON],
+                    [ON, OFF, OFF, ON],
+                    [OFF, ON, OFF, OFF],
 ])
 
 beacon = np.array([
-                    [ON,ON,OFF,OFF],
-                    [ON,ON,OFF,OFF],
-                    [OFF,OFF,ON,ON],
-                    [OFF,OFF,ON,ON],
+                    [ON, ON, OFF, OFF],
+                    [ON, ON, OFF, OFF],
+                    [OFF, OFF, ON, ON],
+                    [OFF, OFF, ON, ON],
+])
+
+# Spaceships
+glider = np.array([
+                    [OFF, OFF, ON], 
+                    [ON, OFF, ON], 
+                    [OFF, ON, ON],
+])
+
+lwspaceship = np.array([
+                    [ON, OFF, OFF, ON, OFF],
+                    [OFF, OFF, OFF, OFF, ON],
+                    [ON, OFF, OFF, OFF, ON],
+                    [OFF, ON, ON, ON, ON],
 ])
 
 templates = [
     block, beehive, loaf, boat, tub, # Still lifes
     blinker, toad, beacon, # Oscillators
+    glider, lwspaceship, # Spaceships
 ]
 
 def fileGrid(configurationFileName):
@@ -112,9 +127,6 @@ def randomGrid(N):
 
 def addGlider(i, j, grid):
     """adds a glider with top left cell at (i, j)"""
-    glider = np.array([[0,    0, 255], 
-                       [255,  0, 255], 
-                       [0,  255, 255]])
     grid[i:i+3, j:j+3] = glider
 
 def addBlock(i, j, grid):
@@ -214,7 +226,10 @@ def update(frameNum, img, grid, N):
                 # Other Entity
                 if aliveCells > countedCells:
                     entities[len(entities)-1] += 1
-                visitedGrid[y:y+offset,x:x+offset] = np.ones(offset*offset).reshape(offset,offset)
+                newVisitedGrid = visitedGrid[y:y+offset,x:x+offset]
+                yDimension = len(newVisitedGrid)
+                xDimension = len(newVisitedGrid[0])
+                visitedGrid[y:y+offset,x:x+offset] = np.ones(yDimension*xDimension).reshape(yDimension,xDimension)
 
     # Output file
     f = open("entity_count.txt","a")
