@@ -271,9 +271,9 @@ def update(frameNum, img, grid, N):
     return img,
 
 def rotateRight(A):
-    return np.flip(A.copy().transpose(),1)
+    return yMirror(A.copy().transpose())
 
-def mirror(A):
+def yMirror(A):
     return np.flip(A.copy(),1)
 
 def subentities(entities):
@@ -286,7 +286,7 @@ def subentities(entities):
             subentity = rotateRight(subentity)
             subentities.append(subentity)
     
-        subentity = mirror(entity.copy())
+        subentity = yMirror(entity.copy())
         subentities.append(subentity)
         for i in range(3):
             subentity = rotateRight(subentity)
