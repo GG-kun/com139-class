@@ -17,7 +17,13 @@ vals = [ON, OFF]
 block = np.array([[ON, ON], 
                     [ON, ON]])
 
-templates = [block]
+beehive = np.array([
+                    [OFF,ON,ON,OFF],
+                    [ON,OFF,OFF,ON],
+                    [OFF,ON,ON,OFF],
+])
+
+templates = [block, beehive]
 
 def fileGrid(configurationFileName):
     """returns a grid of NxM specified by the file with 2D coordinates"""    
@@ -92,6 +98,8 @@ def dead_rule(cell, neighborsCount):
     return cell
 
 def compareEntities(A,B):
+    if len(A) != len(B) or len(A[0]) != len(B[0]):
+        return False
     comparison = A == B
     return comparison.all()
 
@@ -144,7 +152,7 @@ def update(frameNum, img, grid, N):
                     yOffset = len(template)
                     xOffset = len(template[0])
                     window = grid[y:y+yOffset,x:x+xOffset]
-                    if compareEntities(block, window):
+                    if compareEntities(template, window):
                         entities[j] += 1
                         visitedGrid[y:y+yOffset,x:x+xOffset] = np.ones(yOffset*xOffset).reshape(yOffset,xOffset)
 
