@@ -13,6 +13,109 @@ ON = 255
 OFF = 0
 vals = [ON, OFF]
 
+# Entities templates in NxN form
+# Still lifes
+block = np.array([
+                    [ON, ON], 
+                    [ON, ON],
+])
+
+beehive = np.array([
+                    [OFF, ON, ON, OFF],
+                    [ON, OFF, OFF, ON],
+                    [OFF, ON, ON, OFF],
+                    [OFF, OFF, OFF, OFF],
+])
+
+loaf = np.array([
+                    [OFF, ON, ON, OFF],
+                    [ON, OFF, OFF, ON],
+                    [OFF, ON, OFF, ON],
+                    [OFF, OFF, ON, OFF],
+])
+
+boat = np.array([
+                    [ON, ON, OFF],
+                    [ON, OFF, ON],
+                    [OFF, ON, OFF],
+])
+
+tub = np.array([
+                    [OFF, ON, OFF],
+                    [ON, OFF, ON],
+                    [OFF, ON, OFF],
+])
+
+# Oscillators
+blinker = np.array([
+                    [OFF, ON, OFF], 
+                    [OFF, ON, OFF], 
+                    [OFF, ON, OFF],
+])
+
+toad = np.array([
+                    [OFF, OFF, ON, OFF],
+                    [ON, OFF, OFF, ON],
+                    [ON, OFF, OFF, ON],
+                    [OFF, ON, OFF, OFF],
+])
+
+toad_v2 = np.array([
+                    [OFF, OFF, OFF, OFF],
+                    [OFF, ON, ON, ON],
+                    [ON, ON, ON, OFF],
+                    [OFF, OFF, OFF, OFF],
+])
+
+beacon = np.array([
+                    [ON, ON, OFF, OFF],
+                    [ON, ON, OFF, OFF],
+                    [OFF, OFF, ON, ON],
+                    [OFF, OFF, ON, ON],
+])
+
+beacon_v2 = np.array([
+                    [ON, ON, OFF, OFF],
+                    [ON, OFF, OFF, OFF],
+                    [OFF, OFF, OFF, ON],
+                    [OFF, OFF, ON, ON],
+])
+
+# Spaceships
+glider = np.array([
+                    [OFF, OFF, ON], 
+                    [ON, OFF, ON], 
+                    [OFF, ON, ON],
+])
+
+glider_v2 = np.array([
+                    [ON, OFF, ON], 
+                    [OFF, ON, ON], 
+                    [OFF, ON, OFF],
+])
+
+lwspaceship = np.array([
+                    [ON, OFF, OFF, ON, OFF],
+                    [OFF, OFF, OFF, OFF, ON],
+                    [ON, OFF, OFF, OFF, ON],
+                    [OFF, ON, ON, ON, ON],
+                    [OFF, OFF, OFF, OFF, OFF],
+])
+
+lwspaceship_v2 = np.array([
+                    [OFF, OFF, ON, ON, OFF],
+                    [ON, ON, OFF, ON, ON],
+                    [ON, ON, ON, ON, OFF],
+                    [OFF, ON, ON, OFF, OFF],
+                    [OFF, OFF, OFF, OFF, OFF],
+])
+
+templates = [
+    [block], [beehive], [loaf], [boat], [tub], # Still lifes
+    [blinker], [toad, toad_v2], [beacon, beacon_v2], # Oscillators
+    [glider, glider_v2], [lwspaceship, lwspaceship_v2], # Spaceships
+]
+
 def fileGrid(configurationFileName):
     """returns a grid of NxM specified by the file with 2D coordinates"""    
     configurationFile = open(configurationFileName, "r")
@@ -54,22 +157,14 @@ def randomGrid(N):
 
 def addGlider(i, j, grid):
     """adds a glider with top left cell at (i, j)"""
-    glider = np.array([[0,    0, 255], 
-                       [255,  0, 255], 
-                       [0,  255, 255]])
     grid[i:i+3, j:j+3] = glider
 
 def addBlock(i, j, grid):
     """adds a block with top left cell at (i, j)"""
-    block = np.array([[255, 255], 
-                        [255, 255]])
     grid[i:i+2, j:j+2] = block
 
 def addBlinker(i, j, grid):
     """adds a blinker with top left cell at (i, j)"""
-    blinker = np.array([[0,    255, 0], 
-                        [0,  255, 0], 
-                        [0,  255, 0]])
     grid[i:i+3, j:j+3] = blinker
 
 def live_rule(cell, neighborsCount):
@@ -87,15 +182,25 @@ def dead_rule(cell, neighborsCount):
     # All other dead cells stay dead
     return cell
 
+def compareEntities(A,B):
+    if len(A) != len(B) or len(A[0]) != len(B[0]):
+        return False
+    comparison = A == B
+    return comparison.all()
+
 def update(frameNum, img, grid, N):
     # copy grid since we require 8 neighbors for calculation
     # and we go line by line 
     newGrid = grid.copy()
 
+    # Grid of visited cells for entity count
+    visitedGrid = np.zeros(N*N).reshape(N,N)
+
+    # Entity count
     entities = np.array([0,0,0,0,0, # Block, Beehive, Loaf, Boat, Tub
                         0,0,0, # Blinker, Toad, Beacon
                         0,0, # Glider, Light-weight spaceship
-                        1]) # Others
+                        0]) # Others
 
     # Grid iteration
     yCells = len(grid)
@@ -125,11 +230,48 @@ def update(frameNum, img, grid, N):
             # Update current cell in new grid
             newGrid[y][x] = cell
 
+            # Entity count
+            if visitedGrid[y][x] == 0:
+                for i, template in enumerate(templates):
+                    j = len(templates) - 1 - i
+                    found = False
+                    for subentity in template:
+                        yOffset = len(subentity)
+                        xOffset = len(subentity[0])
+                        window = grid[y:y+yOffset,x:x+xOffset]
+                        if compareEntities(subentity, window):
+                            entities[j] += 1
+                            visitedGrid[y:y+yOffset,x:x+xOffset] = np.ones(yOffset*xOffset).reshape(yOffset,xOffset)
+                            found= True
+                            break
+                    if found:
+                        break    
+
+    # Others count
+    offset = 5
+    for y in range(yCells):
+        for x in range(xCells):
+            if visitedGrid[y][x] == 0:
+                # Entity window
+                window = grid[y:y+offset,x:x+offset].flatten()
+                aliveCells = sum(window)/ON
+                # Visited Window
+                window = visitedGrid[y:y+offset,x:x+offset].flatten()
+                countedCells = sum(window)
+                # Other Entity
+                if aliveCells > countedCells:
+                    entities[len(entities)-1] += 1
+                newVisitedGrid = visitedGrid[y:y+offset,x:x+offset]
+                yDimension = len(newVisitedGrid)
+                xDimension = len(newVisitedGrid[0])
+                visitedGrid[y:y+offset,x:x+offset] = np.ones(yDimension*xDimension).reshape(yDimension,xDimension)
+
+    # Output file
     f = open("entity_count.txt","a")
     f.write("{0}:".format(frameNum))
     total = sum(entities)
     for entity in entities:
-        f.write(" {0}({1}%)".format(entity,entity/total*100))
+        f.write(" {0}({1:.2f}%)".format(entity,entity/total*100))
     f.write("\n")
     f.close()
 
@@ -137,6 +279,35 @@ def update(frameNum, img, grid, N):
     img.set_data(newGrid)
     grid[:] = newGrid[:]
     return img,
+
+def rotateRight(A):
+    return yMirror(A.copy().transpose())
+
+def yMirror(A):
+    return np.flip(A.copy(),1)
+
+def removeZeros(entity):
+    newEntity = entity[~np.all(entity == 0, axis=1)].transpose()
+    return newEntity[~np.all(newEntity == 0, axis=1)].transpose()
+
+def subentities(entities):
+    result = []
+    for entity in entities:
+        subentities = [entity]
+        
+        subentity = entity.copy()
+        for i in range(3):
+            subentity = rotateRight(subentity)
+            subentities.append(subentity)
+    
+        subentity = yMirror(entity.copy())
+        subentities.append(subentity)
+        for i in range(3):
+            subentity = rotateRight(subentity)
+            subentities.append(subentity)
+        
+        result += np.unique(np.array(subentities), axis=0).tolist()
+    return np.unique(result, axis = 0)
 
 # main() function
 def main():
@@ -174,7 +345,8 @@ def main():
     if len(sys.argv) > 1:
         # Get initial configuration file name from arguments
         grid = fileGrid(sys.argv[1])
-        if len(grid) <= 0:
+        N = len(grid)
+        if N <= 0:
             return  
         if len(sys.argv) > 2:
             # Get generations from arguments
@@ -188,9 +360,17 @@ def main():
                 print("usage: conway.py [file] [generations]")
                 return
 
+    # Output file
     f = open("entity_count.txt","w")
     f.write("Generation Block Beehive Loaf Boat Tub Blinker Toad Beacon Glider Light-weight spaceship Others\n")
     f.close()
+
+    # Subentities of templates
+    for i, template in enumerate(templates):
+        templates[i] = subentities(template)
+
+    # Templates reverse so templates start from bigger
+    templates.reverse()
 
     # set up animation
     fig, ax = plt.subplots()
