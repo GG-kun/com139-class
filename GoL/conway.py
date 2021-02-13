@@ -13,7 +13,7 @@ ON = 255
 OFF = 0
 vals = [ON, OFF]
 
-# Entities templates
+# Entities templates in NxN form
 # Still lifes
 block = np.array([
                     [ON, ON], 
@@ -24,6 +24,7 @@ beehive = np.array([
                     [OFF, ON, ON, OFF],
                     [ON, OFF, OFF, ON],
                     [OFF, ON, ON, OFF],
+                    [OFF, OFF, OFF, OFF],
 ])
 
 loaf = np.array([
@@ -47,9 +48,9 @@ tub = np.array([
 
 # Oscillators
 blinker = np.array([
-                    [ON], 
-                    [ON], 
-                    [ON],
+                    [OFF, ON, OFF], 
+                    [OFF, ON, OFF], 
+                    [OFF, ON, OFF],
 ])
 
 toad = np.array([
@@ -60,8 +61,10 @@ toad = np.array([
 ])
 
 toad_v2 = np.array([
+                    [OFF, OFF, OFF, OFF],
                     [OFF, ON, ON, ON],
                     [ON, ON, ON, OFF],
+                    [OFF, OFF, OFF, OFF],
 ])
 
 beacon = np.array([
@@ -96,6 +99,7 @@ lwspaceship = np.array([
                     [OFF, OFF, OFF, OFF, ON],
                     [ON, OFF, OFF, OFF, ON],
                     [OFF, ON, ON, ON, ON],
+                    [OFF, OFF, OFF, OFF, OFF],
 ])
 
 lwspaceship_v2 = np.array([
@@ -103,12 +107,13 @@ lwspaceship_v2 = np.array([
                     [ON, ON, OFF, ON, ON],
                     [ON, ON, ON, ON, OFF],
                     [OFF, ON, ON, OFF, OFF],
+                    [OFF, OFF, OFF, OFF, OFF],
 ])
 
 templates = [
-    block, beehive, loaf, boat, tub, # Still lifes
-    blinker, toad, beacon, # Oscillators
-    glider, lwspaceship, # Spaceships
+    [block], [beehive], [loaf], [boat], [tub], # Still lifes
+    [blinker], [toad, toad_v2], [beacon, beacon_v2], # Oscillators
+    [glider, glider_v2], [lwspaceship, lwspaceship_v2], # Spaceships
 ]
 
 def fileGrid(configurationFileName):
@@ -229,13 +234,18 @@ def update(frameNum, img, grid, N):
             if visitedGrid[y][x] == 0:
                 for i, template in enumerate(templates):
                     j = len(templates) - 1 - i
-                    yOffset = len(template)
-                    xOffset = len(template[0])
-                    window = grid[y:y+yOffset,x:x+xOffset]
-                    if compareEntities(template, window):
-                        entities[j] += 1
-                        visitedGrid[y:y+yOffset,x:x+xOffset] = np.ones(yOffset*xOffset).reshape(yOffset,xOffset)
-                        break
+                    found = False
+                    for subentity in template:
+                        yOffset = len(subentity)
+                        xOffset = len(subentity[0])
+                        window = grid[y:y+yOffset,x:x+xOffset]
+                        if compareEntities(subentity, window):
+                            entities[j] += 1
+                            visitedGrid[y:y+yOffset,x:x+xOffset] = np.ones(yOffset*xOffset).reshape(yOffset,xOffset)
+                            found= True
+                            break
+                    if found:
+                        break    
 
     # Others count
     offset = 5
@@ -261,7 +271,7 @@ def update(frameNum, img, grid, N):
     f.write("{0}:".format(frameNum))
     total = sum(entities)
     for entity in entities:
-        f.write(" {0}({1}%)".format(entity,entity/total*100))
+        f.write(" {0}({1:.2f}%)".format(entity,entity/total*100))
     f.write("\n")
     f.close()
 
@@ -275,6 +285,10 @@ def rotateRight(A):
 
 def yMirror(A):
     return np.flip(A.copy(),1)
+
+def removeZeros(entity):
+    newEntity = entity[~np.all(entity == 0, axis=1)].transpose()
+    return newEntity[~np.all(newEntity == 0, axis=1)].transpose()
 
 def subentities(entities):
     result = []
@@ -350,6 +364,10 @@ def main():
     f = open("entity_count.txt","w")
     f.write("Generation Block Beehive Loaf Boat Tub Blinker Toad Beacon Glider Light-weight spaceship Others\n")
     f.close()
+
+    # Subentities of templates
+    for i, template in enumerate(templates):
+        templates[i] = subentities(template)
 
     # Templates reverse so templates start from bigger
     templates.reverse()
