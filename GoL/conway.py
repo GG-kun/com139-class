@@ -183,6 +183,7 @@ def dead_rule(cell, neighborsCount):
     return cell
 
 def compareEntities(A,B):
+    """returns True if both arrays are the same"""
     if len(A) != len(B) or len(A[0]) != len(B[0]):
         return False
     comparison = A == B
@@ -232,14 +233,16 @@ def update(frameNum, img, grid, N):
 
             # Entity count
             if visitedGrid[y][x] == 0:
-                for i, template in enumerate(templates):
+                for i, entity in enumerate(templates):
                     j = len(templates) - 1 - i
+                    # Flag for only one entity per window
                     found = False
-                    for subentity in template:
+                    for subentity in entity:
                         yOffset = len(subentity)
                         xOffset = len(subentity[0])
                         window = grid[y:y+yOffset,x:x+xOffset]
                         if compareEntities(subentity, window):
+                            # When entity is found
                             entities[j] += 1
                             visitedGrid[y:y+yOffset,x:x+xOffset] = np.ones(yOffset*xOffset).reshape(yOffset,xOffset)
                             found= True
@@ -281,16 +284,20 @@ def update(frameNum, img, grid, N):
     return img,
 
 def rotateRight(A):
+    """returns array copy rotated 90° clockwise"""
     return yMirror(A.copy().transpose())
 
 def yMirror(A):
+    """returns array copy rotated 180° in y axis"""
     return np.flip(A.copy(),1)
 
 def removeZeros(entity):
+    """returns array copy with columns of zeros and lines of zeros removed"""
     newEntity = entity[~np.all(entity == 0, axis=1)].transpose()
     return newEntity[~np.all(newEntity == 0, axis=1)].transpose()
 
 def subentities(entities):
+    """returns an array of subentities by given entities (subentities are the same entity but in different rotation)"""
     result = []
     for entity in entities:
         subentities = [entity]
