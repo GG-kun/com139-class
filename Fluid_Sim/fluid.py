@@ -7,6 +7,7 @@ https://github.com/Guilouf/python_realtime_fluidsim
 import numpy as np
 import math
 import json
+import sys
 
 class Fluid:
 
@@ -174,11 +175,11 @@ class Vector2D:
         return
     
     def get_array(self):
-        return [self.x, self.y]
+        return [self.y, self.x]
 
     def set_coord(self, array):
-        self.x = array[0]
-        self.y = array[1]
+        self.x = array[1]
+        self.y = array[0]
 
         return
 
@@ -255,7 +256,6 @@ class Density:
 
         return
 
-
     def __repr__(self):
         return "\nposition:{0}\nsize:{1}\namount:{2}\n".format(self.position, self.size, self.amount)
     def __str__(self):
@@ -265,6 +265,7 @@ class Config:
     color = "viridis"
     velocities = []
     densities = []
+    objects = []
     frames = 120
     current_frame = 0
 
@@ -290,11 +291,16 @@ class Config:
             densities = data["densities"]
             for density in densities:
                 self.densities.append(Density(density))
+
+        if "objects" in data:
+            objects = data["objects"]
+            for obj in objects:
+                self.objects.append(Density(obj))
         
         if "frames" in data:
             self.frames = data["frames"]
 
-    def set_color(self, ax):
+    def set_color(self, ax, x, y):
         ax.clear()
         ax.contourf(x, y, inst.density, cmap=config.color)
 
@@ -302,20 +308,32 @@ class Config:
         for density in self.densities:
             x_limit = density.position.x+density.size.x
             y_limit = density.position.y+density.size.y
-            inst.density[density.position.x:x_limit, density.position.y:y_limit] += density.amount
+            inst.density[density.position.y:y_limit, density.position.x:x_limit] += density.amount
 
     def set_velocities(self, inst):
         for velocity in self.velocities:
             velocity.animate(self.frames, self.current_frame)
-            inst.velo[velocity.position.x, velocity.position.y] = [velocity.direction.x, velocity.direction.y]
+            inst.velo[velocity.position.y, velocity.position.x] = [velocity.direction.y, velocity.direction.x]
 
         self.current_frame += 1    
 
+    def remove_density(self, inst):
+        for obj in self.objects:
+            x_limit = obj.position.x+obj.size.x
+            y_limit = obj.position.y+obj.size.y
+            inst.density[obj.position.y:y_limit, obj.position.x:x_limit] = 0
+
+    def set_objects(self, inst):
+        for obj in self.objects:
+            x_limit = obj.position.x+obj.size.x
+            y_limit = obj.position.y+obj.size.y
+            inst.density[obj.position.y:y_limit, obj.position.x:x_limit] += obj.amount
+
     def __repr__(self):
-        return "\ncolor:{0}\nvelocities:{1}\ndensities:{2}".format(self.color, self.velocities, self.densities)
+        return "\ncolor:{0}\nvelocities:{1}\ndensities:{2}\nobjects:{3}".format(self.color, self.velocities, self.densities, self.objects)
     
     def __str__(self):
-        return "\ncolor:{0}\nvelocities:{1}\ndensities:{2}".format(self.color, self.velocities, self.densities)
+        return "\ncolor:{0}\nvelocities:{1}\ndensities:{2}\nobjects:{3}".format(self.color, self.velocities, self.densities, self.objects)
 
 
 if __name__ == "__main__":
@@ -326,15 +344,19 @@ if __name__ == "__main__":
         inst = Fluid()
 
         def update_im(i):
+            # # We add objects here
+            config.remove_density(inst)
             # We add new density creators in here
             config.set_densities(inst)
             # We add velocity vector values in here
             config.set_velocities(inst)
             inst.step()
+            # # We add objects here
+            config.set_objects(inst)
             im.set_array(inst.density)
             q.set_UVC(inst.velo[:, :, 1], inst.velo[:, :, 0])
             # We add color
-            config.set_color(ax)
+            config.set_color(ax, x, y)
             # print(f"Density sum: {inst.density.sum()}")
             im.autoscale()
 
@@ -342,18 +364,24 @@ if __name__ == "__main__":
         x = np.linspace(0, inst.size, len(inst.density[:,0]))
         y = np.linspace(0, inst.size, len(inst.density[:,1]))
 
-        config = Config(file_path='config.json')
-        # print(config)
+        file_path = None
+        output = "movie"
+        if len(sys.argv) > 1:
+            file_path = sys.argv[1]
+            if len(sys.argv) > 2:
+                output = sys.argv[2]
+
+        config = Config(file_path=file_path)
 
         # plot density
-        im = plt.imshow(inst.density, vmax=100, interpolation='bilinear')
+        im = plt.imshow(inst.density, vmax=100, interpolation='bilinear', cmap=config.color)
 
         # plot vector field
         q = plt.quiver(inst.velo[:, :, 1], inst.velo[:, :, 0], scale=10, angles='xy')
         anim = animation.FuncAnimation(fig, update_im, interval=1, frames=config.frames)
         # anim = animation.FuncAnimation(fig, update_im, interval=0)
         # anim.save("movie.mp4", fps=30, extra_args=['-vcodec', 'libx264'])
-        anim.save("movie.gif", fps=30)
+        anim.save(output+".gif", fps=30)
         plt.show()
 
     except ImportError:
