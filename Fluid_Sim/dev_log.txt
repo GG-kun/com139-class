@@ -28,3 +28,6 @@ remove the density of the area to avoid any movement. When I implemented this so
 I decided that I would remove the density in all areas of the objects, then apply speeds and densities, take a step
 and at the end I would apply density to all areas of the objects once more so that they would have color in the simulation.
 This seemed to do the trick so this was the final solution.
+
+Usage
+python fluid.py [input.json] [output]
