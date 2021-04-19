@@ -6,8 +6,8 @@ https://github.com/Guilouf/python_realtime_fluidsim
 """
 import numpy as np
 import math
-import json
 import sys
+from entities import Vector2D, Velocity, Density, Config
 
 class Fluid:
 
@@ -161,181 +161,6 @@ class Fluid:
             self.roty = self.rotx
         return self.rotx, self.roty
 
-class Vector2D:
-    x = 0
-    y = 0
-    
-    def __init__(self, vector=None):
-        if vector is not None:
-            if 'x' in vector:
-                self.x = vector['x']
-            if 'y' in vector:
-                self.y = vector['y']
-        
-        return
-    
-    def get_array(self):
-        return [self.y, self.x]
-
-    def set_coord(self, array):
-        self.x = array[1]
-        self.y = array[0]
-
-        return
-
-    def __repr__(self):
-        return "({0},{1})".format(self.x,self.y)
-    def __str__(self):
-        return "({0},{1})".format(self.x,self.y)
-
-class Velocity:
-    position = Vector2D()
-    direction = Vector2D()
-    initial_direction = Vector2D()
-    animation = ""
-
-    def __init__(self, velocity=None):
-        if velocity is not None:
-            if "position" in velocity:
-                self.position = Vector2D(velocity["position"])
-            if "direction" in velocity:
-                self.direction = Vector2D(velocity["direction"])
-                self.initial_direction = Vector2D(velocity["direction"])
-            if "animation" in velocity:
-                self.animation = velocity["animation"]
-
-        return
-
-    def animate(self, frames, current_frame):
-        if self.animation == "spinning":
-            self.spin(1.5*360/frames)
-        if self.animation == "spraying":
-            self.spray(90, 2*current_frame*360/frames)
-
-    def spin(self, degree):
-        direction_matrix = np.array(self.direction.get_array())
-        
-        radians = math.radians(degree)
-        spin_matrix = np.array([
-            [math.cos(radians), -math.sin(radians)],
-            [math.sin(radians), math.cos(radians)],
-        ])
-
-        self.direction.set_coord(np.matmul(direction_matrix, spin_matrix))
-
-    def spray(self, delta_degree, degree):
-        direction_matrix = np.array(self.initial_direction.get_array())
-        
-        delta_degree *= math.sin(math.radians(degree))
-        radians = math.radians(delta_degree)
-        spin_matrix = np.array([
-            [math.cos(radians), -math.sin(radians)],
-            [math.sin(radians), math.cos(radians)],
-        ])
-
-        self.direction.set_coord(np.matmul(direction_matrix, spin_matrix))
-
-    def __repr__(self):
-        return "\nposition:{0}\ndirection:{1}\nanimation:{2}\n".format(self.position, self.direction, self.animation)
-    def __str__(self):
-        return "\nposition:{0}\ndirection:{1}\nanimation:{2}\n".format(self.position, self.direction, self.animation)
-
-class Density:
-    position = Vector2D()
-    size = Vector2D()
-    amount = 0
-
-    def __init__(self, density=None):
-        if density is not None:
-            if "position" in density:
-                self.position = Vector2D(density["position"])
-            if "size" in density:
-                self.size = Vector2D(density["size"])
-            if "amount" in density:
-                self.amount = density["amount"]
-
-        return
-
-    def __repr__(self):
-        return "\nposition:{0}\nsize:{1}\namount:{2}\n".format(self.position, self.size, self.amount)
-    def __str__(self):
-        return "\nposition:{0}\nsize:{1}\namount:{2}\n".format(self.position, self.size, self.amount)    
-
-class Config:
-    color = "viridis"
-    velocities = []
-    densities = []
-    objects = []
-    frames = 120
-    current_frame = 0
-
-    def __init__(self, file_path=None):
-        if file_path is not None:
-            self.set_json(file_path)
-
-        return
-
-    def set_json(self, file_path):
-        with open(file_path) as f:
-            data = json.load(f)
-
-        if "color" in data:
-            self.color = data["color"]
-        
-        if "velocities" in data:
-            velocities = data["velocities"]
-            for velocity in velocities:
-                self.velocities.append(Velocity(velocity))
-
-        if "densities" in data:
-            densities = data["densities"]
-            for density in densities:
-                self.densities.append(Density(density))
-
-        if "objects" in data:
-            objects = data["objects"]
-            for obj in objects:
-                self.objects.append(Density(obj))
-        
-        if "frames" in data:
-            self.frames = data["frames"]
-
-    def set_color(self, ax, x, y):
-        ax.clear()
-        ax.contourf(x, y, inst.density, cmap=config.color)
-
-    def set_densities(self, inst):
-        for density in self.densities:
-            x_limit = density.position.x+density.size.x
-            y_limit = density.position.y+density.size.y
-            inst.density[density.position.y:y_limit, density.position.x:x_limit] += density.amount
-
-    def set_velocities(self, inst):
-        for velocity in self.velocities:
-            velocity.animate(self.frames, self.current_frame)
-            inst.velo[velocity.position.y, velocity.position.x] = [velocity.direction.y, velocity.direction.x]
-
-        self.current_frame += 1    
-
-    def remove_density(self, inst):
-        for obj in self.objects:
-            x_limit = obj.position.x+obj.size.x
-            y_limit = obj.position.y+obj.size.y
-            inst.density[obj.position.y:y_limit, obj.position.x:x_limit] = 0
-
-    def set_objects(self, inst):
-        for obj in self.objects:
-            x_limit = obj.position.x+obj.size.x
-            y_limit = obj.position.y+obj.size.y
-            inst.density[obj.position.y:y_limit, obj.position.x:x_limit] += obj.amount
-
-    def __repr__(self):
-        return "\ncolor:{0}\nvelocities:{1}\ndensities:{2}\nobjects:{3}".format(self.color, self.velocities, self.densities, self.objects)
-    
-    def __str__(self):
-        return "\ncolor:{0}\nvelocities:{1}\ndensities:{2}\nobjects:{3}".format(self.color, self.velocities, self.densities, self.objects)
-
-
 if __name__ == "__main__":
     try:
         import matplotlib.pyplot as plt
@@ -345,14 +170,14 @@ if __name__ == "__main__":
 
         def update_im(i):
             # # We add objects here
-            config.remove_density(inst)
+            config.remove_density()
             # We add new density creators in here
-            config.set_densities(inst)
+            config.set_densities()
             # We add velocity vector values in here
-            config.set_velocities(inst)
+            config.set_velocities()
             inst.step()
             # # We add objects here
-            config.set_objects(inst)
+            config.set_objects()
             im.set_array(inst.density)
             q.set_UVC(inst.velo[:, :, 1], inst.velo[:, :, 0])
             # We add color
@@ -371,7 +196,7 @@ if __name__ == "__main__":
             if len(sys.argv) > 2:
                 output = sys.argv[2]
 
-        config = Config(file_path=file_path)
+        config = Config(file_path=file_path, fluid=inst)
 
         # plot density
         im = plt.imshow(inst.density, vmax=100, interpolation='bilinear', cmap=config.color)
