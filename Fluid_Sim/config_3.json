@@ -1,0 +1,64 @@
+{
+    "color": "pink",
+    "densities": [
+        {
+            "position":{
+                "x": 20,
+                "y": 35
+            },
+            "size":{
+                "x": 3,
+                "y": 3
+            },
+            "amount": 1000
+        }
+    ],
+    "velocities":[
+        {
+            "position":{
+                "x": 20,
+                "y": 35
+            },
+            "direction": {
+                "x":1,
+                "y":-1
+            },
+            "animation": "spinning"
+        }
+    ],
+    "objects":[
+        {
+            "position":{
+                "x": 10,
+                "y": 30
+            },
+            "size":{
+                "x": 7,
+                "y": 7
+            },
+            "amount":2500
+        },
+        {
+            "position":{
+                "x": 20,
+                "y": 20
+            },
+            "size":{
+                "x": 3,
+                "y": 3
+            },
+            "amount":2500
+        },
+        {
+            "position":{
+                "x": 30,
+                "y": 45
+            },
+            "size":{
+                "x": 4,
+                "y": 4
+            },
+            "amount":2500
+        }
+    ]
+}

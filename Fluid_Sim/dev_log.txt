@@ -1,0 +1,30 @@
+Color schema
+I started with the simulation color as I thought it would be the easiest to solve. 
+The most challenging part of this task was my lack of knowledge of the Python language. 
+I found out that you can change the color scheme of the pyplot with cmap. 
+It is possible to change in figure or axis but I decided to take the second option since
+there was an 'issue' with the labels on the y-axis since they were inverted,
+so I decided to change the y-axis labels and cmap schema.
+
+Multiple velocity and density sources
+This was the second task I solved since there was already examples in the sourde code.
+Then I just implemented the configuration for them; Velocity, Density, Config and
+Vector2D classes. With the Config class I realized that receiving a json was the best option.
+I decided that the Config class would store the sources and could apply them to the simulation.
+
+Animate velocity forces
+I left these last two tasks at the end as I thought they were the most complex to implement.
+To animate the speed forces, I implemented a method that we are currently reviewing in our
+stereography subject and that is affine transformations. So I decided to create the animate() method
+in Velocity, which would be called each time the force was applied to the simulation,
+depending on the current speed animation, the Vector2D would be multiplied by a matrix.
+
+Object presence
+This was the one that took me the longest to solve and it is because I was thinking that objects have
+higher density and just because of that the simulation would behave like it was much more difficult to
+move the 'molecules' in this area but after several experiments it turns out that this would not be the solution.
+Once I realized this, I wondered what would make the 'molecules' stay still and the first answer was
+remove the density of the area to avoid any movement. When I implemented this solution and it seemed to work
+I decided that I would remove the density in all areas of the objects, then apply speeds and densities, take a step
+and at the end I would apply density to all areas of the objects once more so that they would have color in the simulation.
+This seemed to do the trick so this was the final solution.
