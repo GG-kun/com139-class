@@ -3,7 +3,7 @@ import numpy as np
 import json
 import os.path
 
-data_file = "COVID_MX_2020_tst.xlsx"
+data_file = "COVID_MX_2020.xlsx"
 catalog_file = "Catalogos.xlsx"
 desc_file = "descriptor.json"
 
@@ -107,8 +107,13 @@ load_files()
 
 # print(covid_df["ENTIDAD_RES"].value_counts())
 
-sex_by_state_df = covid_df[['SEXO', 'ENTIDAD_RES']]
+# result = covid_df.to_json(r'export_dataframe.json', orient="records")
+# parsed = json.loads(result)
+# json.dumps(parsed, indent=4)
+
+sex_by_state_df = covid_df[['sexo', 'entidad_res']]
 print("The data set contains " + str(sex_by_state_df.shape[0]) + " rows by " + str(sex_by_state_df.shape[1]) + " columns.")
 print(sex_by_state_df.head())
+# result = sex_by_state_df.to_json(r'sexo_entidad_res.json', orient="records")
 
 # TODO: Make sure you have virtualenv, django and djantorestframework
